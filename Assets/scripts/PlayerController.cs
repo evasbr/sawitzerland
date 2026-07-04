@@ -81,8 +81,8 @@ public class PlayerController : MonoBehaviour
         // Menggunakan tombol Q atau Space (sesuai preferensi)
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Q))
         {
-            // Trik untuk memutar nilai enum: 0 -> 1 -> 2 -> 0 -> ...
-            int nextToolIndex = ((int)currentTool + 1) % 3;
+            // Trik untuk memutar nilai enum: 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 0 -> ...
+            int nextToolIndex = ((int)currentTool + 1) % 7;
             currentTool = (ItemType)nextToolIndex;
             
             // Perbarui parameter WeaponType di Animator
@@ -143,7 +143,7 @@ public class PlayerController : MonoBehaviour
     private void UpdateToolAnimator()
     {
         // Mengatur parameter "WeaponType" (0 = Tangan Kosong, 1 = Kapak, 2 = Beliung)
-        anim.SetInteger("WeaponType", (int)currentTool);
+        anim.SetFloat("WeaponType", (float)currentTool);
     }
 
     // Fungsi visualisasi: Menggambar lingkaran merah di editor Unity untuk memudahkan mengatur besar/posisi 'hitPoint'
