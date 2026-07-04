@@ -14,6 +14,18 @@ public class PlayerController : MonoBehaviour
     [Header("Status Alat saat ini")]
     public ItemType currentTool = ItemType.BareHanded;
 
+    [Header("Komponen Audio")]
+    public AudioSource audioSource;
+
+    [Header("Daftar Suara Alat")]
+    public AudioClip sfxBareHand;
+    public AudioClip sfxAxe;
+    public AudioClip sfxHoe;
+    public AudioClip sfxPlanting;
+    public AudioClip sfxScythe;
+    public AudioClip sfxPickaxe;
+    public AudioClip sfxWatering;
+
     // Komponen referensi
     private Rigidbody2D rb;
     private Animator anim;
@@ -93,37 +105,57 @@ public class PlayerController : MonoBehaviour
     }
 
     private void HandleActionInput()
+{
+    // LOG 0: Cek apakah klik mouse kiri terdaftar oleh Unity
+    if (Input.GetMouseButtonDown(0))
     {
-        // 0 berarti Klik Kiri Mouse
-        if (Input.GetMouseButtonDown(0))
-        {
-            // 1. Jalankan animasi serangan
-            anim.SetTrigger("Attack");
+        Debug.Log("[INPUT LOG] Klik kiri mouse terdeteksi! Mencoba memicu animasi dan deteksi objek...");
 
-            // 2. Cek apakah ada objek di depan kita
-            DetectAndHitObject();
+        if (anim != null)
+        {
+            anim.SetTrigger("Attack");
         }
+        else
+        {
+            Debug.LogWarning("[INPUT LOG] Animator tidak ditemukan pada Player!");
+        }
+
+        // Panggil fungsi deteksi
+        DetectAndHitObject();
     }
+}
 
     private void DetectAndHitObject()
+{
+    if (hitPoint == null) return;
+
+    // 1. Cek apakah lingkaran deteksi mendeteksi sesuatu di layer interactableLayer
+    Collider2D hitCollider = Physics2D.OverlapCircle(hitPoint.position, hitRadius, interactableLayer);
+
+    if (hitCollider != null)
     {
-        if (hitPoint == null) return;
+        // LOG JIKA ADA COLLIDER TERDETEKSI
+        Debug.Log($"[PLAYER LOG] Berhasil mendeteksi objek: '{hitCollider.name}' pada layer Interactables!");
 
-        // Membuat area deteksi berbentuk lingkaran tak kasat mata
-        // OverlapCircle akan mendeteksi collider yang memiliki layer 'interactableLayer'
-        Collider2D hitCollider = Physics2D.OverlapCircle(hitPoint.position, hitRadius, interactableLayer);
-
-        if (hitCollider != null)
+        InteractableObject interactable = hitCollider.GetComponent<InteractableObject>();
+        if (interactable != null)
         {
-            // Mencoba mendapatkan script InteractableObject dari objek yang terdeteksi
-            InteractableObject interactable = hitCollider.GetComponent<InteractableObject>();
-            if (interactable != null)
-            {
-                // Eksekusi fungsi OnHit pada objek dengan membawa informasi alat apa yang kita gunakan
-                interactable.OnHit(currentTool);
-            }
+            // LOG JIKA SCRIPT BERHASIL DITEMUKAN
+            Debug.Log($"[PLAYER LOG] Script InteractableObject ditemukan di '{hitCollider.name}'. Mengirim perintah OnHit...");
+            interactable.OnHit(currentTool);
+        }
+        else
+        {
+            // LOG JIKA COLLIDER ADA TAPI SCRIPTNYA NGGAK KETEMU
+            Debug.LogWarning($"[PLAYER LOG] Menabrak '{hitCollider.name}', tapi script 'InteractableObject' TIDAK DITEMUKAN di objek ini atau induknya!");
         }
     }
+    else
+    {
+        // LOG JIKA SERANGAN HANYA MENGENAI ANGIN KOSONG
+        Debug.Log("[PLAYER LOG] Ayunan alat tidak mengenai objek apa pun di layer Interactables.");
+    }
+}
 
     private void UpdateAnimator()
     {
@@ -153,6 +185,29 @@ public class PlayerController : MonoBehaviour
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(hitPoint.position, hitRadius);
+        }
+    }
+
+    public void PlayToolSFX(int weaponIndex)
+    {
+        AudioClip clipToPlay = null;
+
+        // Tentukan suara berdasarkan indeks alat yang sedang dipakai
+        switch (weaponIndex)
+        {
+            case 0: clipToPlay = sfxBareHand; break;
+            case 1: clipToPlay = sfxAxe; break;
+            case 2: clipToPlay = sfxHoe; break;
+            case 3: clipToPlay = sfxPlanting; break;
+            case 4: clipToPlay = sfxScythe; break;
+            case 5: clipToPlay = sfxPickaxe; break;
+            case 6: clipToPlay = sfxWatering; break; // Sesuaikan dengan indeks watering can
+        }
+
+        // Putar suaranya jika clip tidak kosong
+        if (clipToPlay != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clipToPlay);
         }
     }
 }
