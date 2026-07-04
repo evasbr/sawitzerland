@@ -944,6 +944,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c6c00d4da221d24f8e34c4c9137c425, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  objectName: Interactable Object
+  xpReward: 5
   audioSource: {fileID: 0}
   maxHits: 3
   requiredTool: 1

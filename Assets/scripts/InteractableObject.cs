@@ -3,6 +3,10 @@ using System.Collections;
 
 public class InteractableObject : MonoBehaviour
 {
+    [Header("Interact Settings")]
+    [SerializeField] private string objectName = "Interactable Object";
+    [SerializeField] private int xpReward = 15; // Jumlah XP yang didapat jika objek ini hancur
+    
     [Header("Komponen Audio")]
     public AudioSource audioSource;
 
@@ -30,46 +34,35 @@ public class InteractableObject : MonoBehaviour
 
     private void Start()
     {
-        // Simpan posisi awal pohon agar setelah goyang bisa balik ke tempat semula
         originalPosition = transform.localPosition;
     }
     
-    // Fungsi utama yang dipanggil oleh Player
+    // Fungsi OnHit (Sekarang menerima komponen XPSystem milik player)
     public virtual void OnHit(ItemType toolUsed)
     {
-        // LOGGING 1: Memastikan fungsi ini kepanggil oleh PlayerController
-        Debug.Log($"[LOG 1] Objek '{gameObject.name}' BERHASIL TERKENA PUKULAN! Player menggunakan alat: {toolUsed}");
+        Debug.Log($"[LOG 1] Objek '{gameObject.name}' terkena pukulan!");
 
-        // Cek apakah alat yang dipakai Player sudah cocok
         if (toolUsed != requiredTool)
         {
-            // LOGGING 2: Jika alatnya salah
-            Debug.LogWarning($"[LOG 2] Pukulan DITOLAK pada '{gameObject.name}'! Alat salah. Butuh: {requiredTool}, tapi Player pakai: {toolUsed}");
+            Debug.LogWarning($"[LOG 2] Alat salah! Butuh: {requiredTool}");
             return; 
         }
 
         currentHits++;
-
-        // PANGGIL EFEK GOYANG DI SINI SAAT DIPUKUL
+        
+        // Efek goyang
         if (!isShaking && currentHits < maxHits)
         {
             StartCoroutine(ShakeObject());
         }
         
-        // LOGGING 3: Menampilkan hitungan hit saat ini
-        Debug.Log($"[LOG 3] Pukulan MASUK pada '{gameObject.name}'. Hit saat ini: {currentHits} / {maxHits}");
-
-        // 1. Tentukan suara dan aksi yang akan diputar
         if (currentHits >= maxHits)
         {
-            // LOGGING 4: Memicu proses kehancuran
-            Debug.Log($"[LOG 4] '{gameObject.name}' mencapai batas Max Hits! Menjalankan OnObjectDestroyed()...");
             PlaySound(destroySound);
-            OnObjectDestroyed();
+            OnObjectDestroyed(); // Fungsi ini nanti yang panggil PlayerStats.instance.AddXP
         }
         else
         {
-            // Ambil suara sesuai urutan pukulan saat ini
             if (hitSounds.Length > 0)
             {
                 int soundIndex = Mathf.Min(currentHits - 1, hitSounds.Length - 1);
@@ -82,18 +75,13 @@ public class InteractableObject : MonoBehaviour
     {
         isShaking = true;
         float elapsedTime = 0f;
-
         while (elapsedTime < shakeDuration)
         {
-            // Bikin posisi acak sedikit ke kanan/kiri/atas/bawah
             float randomX = Random.Range(-shakeMagnitude, shakeMagnitude);
             transform.localPosition = new Vector3(originalPosition.x + randomX, originalPosition.y, originalPosition.z);
-
             elapsedTime += Time.deltaTime;
-            yield return null; // Tunggu sampai frame berikutnya
+            yield return null;
         }
-
-        // Kembalikan ke posisi semula setelah selesai goyang
         transform.localPosition = originalPosition;
         isShaking = false;
     }
@@ -106,34 +94,35 @@ public class InteractableObject : MonoBehaviour
         }
     }
 
+    // Fungsi hancur yang dimodifikasi untuk memberi XP kepada player
     protected virtual void OnObjectDestroyed()
+{
+    // 1. Matikan Collider pohon agar tidak bisa dipukul lagi setelah hancur
+    Collider2D col = GetComponent<Collider2D>();
+    if (col != null) col.enabled = false;
+
+    // 2. Sembunyikan semua visual sprite anak (batang, daun, dll)
+    foreach (Transform child in transform)
     {
-        // Matikan Collider objek induk agar tidak bisa dipukul lagi
-        if (GetComponent<Collider2D>() != null) 
-        {
-            GetComponent<Collider2D>().enabled = false;
-            Debug.Log($"[LOG 5] Collider pada '{gameObject.name}' telah dimatikan.");
-        }
-
-        // MATIKAN SEMUA VISUAL DI OBJEK ANAK (CHILD)
-        int childCount = 0;
-        foreach (Transform child in transform)
-        {
-            child.gameObject.SetActive(false);
-            childCount++;
-        }
-        Debug.Log($"[LOG 6] Berhasil me-nonaktifkan {childCount} objek anak (visual puzzle) dari '{gameObject.name}'.");
-
-        if (destroyEffectPrefab != null)
-        {
-            // Buat posisi partikel sedikit lebih tinggi dari pohon
-            Vector3 spawnPosition = transform.position + new Vector3(0, 1.8f, 0); 
-            GameObject effect = Instantiate(destroyEffectPrefab, spawnPosition, Quaternion.identity);
-            Destroy(effect, 2.0f); // Hancurkan sisa partikel setelah 2 detik agar tidak menumpuk di memori
-        }
-        
-        // Hancurkan objek secara utuh setelah 1 detik
-        Destroy(gameObject, 1.0f); 
-        Debug.Log($"[LOG 7] Perintah Destroy(gameObject) untuk '{gameObject.name}' telah dikirim ke Unity. Objek akan hilang dalam 1 detik.");
+        child.gameObject.SetActive(false);
     }
+
+    // 3. Panggil efek partikel kayu jika ada (menggunakan float untuk waktu destroy effect)
+    if (destroyEffectPrefab != null)
+    {
+        Vector3 spawnPosition = transform.position + new Vector3(0, 1.0f, 0);
+        GameObject effect = Instantiate(destroyEffectPrefab, spawnPosition, Quaternion.identity);
+        Destroy(effect, 2.0f); // 2.0f di sini adalah float, ini sudah benar untuk Destroy
+    }
+
+    // 4. Kirim XP ke PlayerStats (xpReward harus berupa angka BULAT/int)
+    if (PlayerStats.instance != null)
+    {
+        // Pastikan variabel 'xpReward' di bagian atas script dideklarasikan sebagai: public int xpReward = 20;
+        PlayerStats.instance.AddXP(xpReward); 
+    }
+
+    // 5. Hancurkan objek pohon utama dari dunia game setelah 1 detik
+    Destroy(gameObject, 1.0f); 
+}
 }

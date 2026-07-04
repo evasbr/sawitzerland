@@ -4,15 +4,21 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Pengaturan Pergerakan")]
     public float moveSpeed = 5f;
-    private Vector2 movement;
+    private Rigidbody2D rb;
+    private Vector2 moveInput;
+    private Animator anim;
+    private Vector2 lastMoveDirection = Vector2.down; // Arah hadap default: ke bawah
 
     [Header("Pengaturan Interaksi")]
-    public Transform hitPoint; // Posisi titik tempat serangan mendarat (harus berada di depan player)
-    public float hitRadius = 0.5f; // Besarnya area deteksi serangan
-    public LayerMask interactableLayer; // Layer untuk memfilter objek yang bisa dipukul (misal: "Interactables")
+    [Tooltip("Target posisi objek child HitPoint di depan Player")]
+    public Transform hitPoint;
+    [Tooltip("Jari-jari lingkaran deteksi pukulan")]
+    public float hitRadius = 0.5f;
+    [Tooltip("Pilih Physics Layer tempat objek interaktif berada (misal: Collision atau Interactables)")]
+    public LayerMask interactableLayer;
 
-    [Header("Status Alat saat ini")]
-    public ItemType currentTool = ItemType.BareHanded;
+    [Header("Status Alat saat Ini")]
+    public ItemType currentTool = ItemType.BareHanded; 
 
     [Header("Komponen Audio")]
     public AudioSource audioSource;
@@ -26,16 +32,13 @@ public class PlayerController : MonoBehaviour
     public AudioClip sfxPickaxe;
     public AudioClip sfxWatering;
 
-    // Komponen referensi
-    private Rigidbody2D rb;
-    private Animator anim;
-    private Vector2 lastMoveDirection = Vector2.down; // Arah hadap default: ke bawah
-
-    void Start()
+    private void Start()
     {
-        // Mengambil komponen yang menempel pada objek Player
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+        
+        if (audioSource == null) 
+            audioSource = GetComponent<AudioSource>();
 
         // Set arah default awal ke kanan (1f) agar animasi tidak ngefreeze di awal game
         if (anim != null)
@@ -47,37 +50,37 @@ public class PlayerController : MonoBehaviour
         UpdateToolAnimator();
     }
 
-    void Update()
+    private void Update()
     {
-        // 1. Mengambil Input Pergerakan (W, A, S, D / Panah)
+        // 1. Mengambil Input Pergerakan
         HandleMovementInput();
 
         // 2. Mengambil Input Ganti Alat (Q / Space)
         HandleToolSwapInput();
 
-        // 3. Mengambil Input Interaksi (Klik Kiri)
+        // 3. Mengambil Input Interaksi (Klik Kiri Mouse)
         HandleActionInput();
 
-        // 4. Mengirim data ke Animator Controller
+        // 4. Mengatur Parameter Animator
         UpdateAnimator();
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        // Menggunakan FixedUpdate khusus untuk pergerakan fisik (Rigidbody)
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        // Mengeksekusi pergerakan fisik Player
+        rb.MovePosition(rb.position + moveInput * moveSpeed * Time.fixedDeltaTime);
     }
 
     private void HandleMovementInput()
     {
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
+        moveInput.x = Input.GetAxisRaw("Horizontal");
+        moveInput.y = Input.GetAxisRaw("Vertical");
 
         // Jika player sedang bergerak
-        if (movement.x != 0 || movement.y != 0)
+        if (moveInput.x != 0 || moveInput.y != 0)
         {
             // Simpan arah hadap terakhir (normalized agar nilainya selalu 1 walau bergerak diagonal)
-            lastMoveDirection = movement.normalized;
+            lastMoveDirection = moveInput.normalized;
 
             // Menggeser posisi `hitPoint` (titik pukulan) agar selalu berada tepat di depan arah hadap player
             // Angka 0.8f adalah jarak hitPoint dari tengah player, sesuaikan dengan ukuran sprite Anda
@@ -90,7 +93,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleToolSwapInput()
     {
-        // Menggunakan tombol Q atau Space (sesuai preferensi)
+        // Menggunakan tombol Q atau Space untuk memutar alat
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Q))
         {
             // Trik untuk memutar nilai enum: 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 0 -> ...
@@ -105,109 +108,111 @@ public class PlayerController : MonoBehaviour
     }
 
     private void HandleActionInput()
-{
-    // LOG 0: Cek apakah klik mouse kiri terdaftar oleh Unity
-    if (Input.GetMouseButtonDown(0))
     {
-        Debug.Log("[INPUT LOG] Klik kiri mouse terdeteksi! Mencoba memicu animasi dan deteksi objek...");
-
-        if (anim != null)
+        if (Input.GetMouseButtonDown(0))
         {
-            anim.SetTrigger("Attack");
-        }
-        else
-        {
-            Debug.LogWarning("[INPUT LOG] Animator tidak ditemukan pada Player!");
-        }
+            Debug.Log("[INPUT LOG] Klik kiri mouse terdeteksi! Memulai ayunan alat...");
 
-        // Panggil fungsi deteksi
-        DetectAndHitObject();
+            // Pemicu animasi serang
+            if (anim != null) 
+                anim.SetTrigger("Attack");
+
+            // Putar suara ayunan alat
+            PlayToolSFX(currentTool);
+
+            // Jalankan deteksi objek di depan
+            DetectAndHitObject();
+        }
     }
-}
 
     private void DetectAndHitObject()
-{
-    if (hitPoint == null) return;
-
-    // 1. Cek apakah lingkaran deteksi mendeteksi sesuatu di layer interactableLayer
-    Collider2D hitCollider = Physics2D.OverlapCircle(hitPoint.position, hitRadius, interactableLayer);
-
-    if (hitCollider != null)
     {
-        // LOG JIKA ADA COLLIDER TERDETEKSI
-        Debug.Log($"[PLAYER LOG] Berhasil mendeteksi objek: '{hitCollider.name}' pada layer Interactables!");
-
-        InteractableObject interactable = hitCollider.GetComponent<InteractableObject>();
-        if (interactable != null)
+        if (hitPoint == null)
         {
-            // LOG JIKA SCRIPT BERHASIL DITEMUKAN
-            Debug.Log($"[PLAYER LOG] Script InteractableObject ditemukan di '{hitCollider.name}'. Mengirim perintah OnHit...");
-            interactable.OnHit(currentTool);
+            Debug.LogError("[PLAYER ERROR] Variabel 'hitPoint' masih KOSONG! Seret objek child HitPoint ke Inspector Player.");
+            return;
+        }
+
+        // Cek apakah lingkaran deteksi mendeteksi collider di layer yang ditentukan
+        Collider2D hitCollider = Physics2D.OverlapCircle(hitPoint.position, hitRadius, interactableLayer);
+
+        if (hitCollider != null)
+        {
+            Debug.Log($"[PLAYER LOG] Menabrak objek: '{hitCollider.name}'");
+
+            // Ambil script InteractableObject dari objek yang terkena atau induknya
+            InteractableObject interactable = hitCollider.GetComponent<InteractableObject>();
+            if (interactable == null) 
+                interactable = hitCollider.GetComponentInParent<InteractableObject>();
+
+            if (interactable != null)
+            {
+                interactable.OnHit(currentTool);
+            }
+            else
+            {
+                Debug.LogWarning($"[PLAYER LOG] Menabrak '{hitCollider.name}', tapi tidak ada script 'InteractableObject' menempel.");
+            }
         }
         else
         {
-            // LOG JIKA COLLIDER ADA TAPI SCRIPTNYA NGGAK KETEMU
-            Debug.LogWarning($"[PLAYER LOG] Menabrak '{hitCollider.name}', tapi script 'InteractableObject' TIDAK DITEMUKAN di objek ini atau induknya!");
+            Debug.Log("[PLAYER LOG] Ayunan alat tidak mengenai objek apa pun di layer target.");
         }
     }
-    else
-    {
-        // LOG JIKA SERANGAN HANYA MENGENAI ANGIN KOSONG
-        Debug.Log("[PLAYER LOG] Ayunan alat tidak mengenai objek apa pun di layer Interactables.");
-    }
-}
 
     private void UpdateAnimator()
     {
+        if (anim == null) return;
+
         // Memberitahu Animator kecepatan player (Speed > 0 artinya berjalan)
-        anim.SetFloat("Speed", movement.sqrMagnitude);
+        anim.SetFloat("Speed", moveInput.sqrMagnitude);
 
         // Hanya update arah horizontal di animator jika player bergerak ke Kiri/Kanan
         // Jika player bergerak ke Atas/Bawah saja, parameter Horizontal tidak diganti (tetap kiri/kanan terakhir)
-        if (movement.x != 0)
+        if (moveInput.x != 0)
         {
-            anim.SetFloat("Horizontal", movement.x);
-            // Kode Debug Sementara: Menampilkan nilai di Console Unity
-            Debug.Log("Input Terdeteksi! Mengirim nilai Horizontal ke Animator: " + movement.x);
+            anim.SetFloat("Horizontal", moveInput.x);
+            Debug.Log("Input Terdeteksi! Mengirim nilai Horizontal ke Animator: " + moveInput.x);
         }
     }
 
     private void UpdateToolAnimator()
     {
-        // Mengatur parameter "WeaponType" (0 = Tangan Kosong, 1 = Kapak, 2 = Beliung)
+        if (anim == null) return;
+
+        // Mengatur parameter "WeaponType" (0 = Tangan Kosong, 1 = Kapak, 2 = Beliung, dst)
         anim.SetFloat("WeaponType", (float)currentTool);
     }
 
-    // Fungsi visualisasi: Menggambar lingkaran merah di editor Unity untuk memudahkan mengatur besar/posisi 'hitPoint'
+    private void PlayToolSFX(ItemType tool)
+    {
+        if (audioSource == null) return;
+
+        AudioClip clipToPlay = null;
+        switch (tool)
+        {
+            case ItemType.BareHanded: clipToPlay = sfxBareHand; break;
+            case ItemType.Axe: clipToPlay = sfxAxe; break;
+            case ItemType.Hoe: clipToPlay = sfxHoe; break;
+            case ItemType.Seeds: clipToPlay = sfxPlanting; break;
+            case ItemType.WateringCan: clipToPlay = sfxWatering; break;
+            case ItemType.Scythe: clipToPlay = sfxScythe; break;
+            case ItemType.Pickaxe: clipToPlay = sfxPickaxe; break;
+        }
+
+        if (clipToPlay != null)
+        {
+            audioSource.PlayOneShot(clipToPlay);
+        }
+    }
+
+    // Menggambar visual lingkaran hitRadius di editor agar mudah dikalibrasi posisinya
     private void OnDrawGizmosSelected()
     {
         if (hitPoint != null)
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(hitPoint.position, hitRadius);
-        }
-    }
-
-    public void PlayToolSFX(int weaponIndex)
-    {
-        AudioClip clipToPlay = null;
-
-        // Tentukan suara berdasarkan indeks alat yang sedang dipakai
-        switch (weaponIndex)
-        {
-            case 0: clipToPlay = sfxBareHand; break;
-            case 1: clipToPlay = sfxAxe; break;
-            case 2: clipToPlay = sfxHoe; break;
-            case 3: clipToPlay = sfxPlanting; break;
-            case 4: clipToPlay = sfxScythe; break;
-            case 5: clipToPlay = sfxPickaxe; break;
-            case 6: clipToPlay = sfxWatering; break; // Sesuaikan dengan indeks watering can
-        }
-
-        // Putar suaranya jika clip tidak kosong
-        if (clipToPlay != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(clipToPlay);
         }
     }
 }
