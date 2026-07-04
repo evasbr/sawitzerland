@@ -949,6 +949,9 @@ MonoBehaviour:
   requiredTool: 1
   hitSounds: []
   destroySound: {fileID: 0}
+  shakeDuration: 0.15
+  shakeMagnitude: 0.1
+  destroyEffectPrefab: {fileID: 6656646172624129884, guid: 11be2315c9675fb4eada12a0178d0290, type: 3}
 --- !u!82 &3397638384440209144
 AudioSource:
   m_ObjectHideFlags: 0

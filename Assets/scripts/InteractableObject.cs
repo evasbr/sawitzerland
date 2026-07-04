@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class InteractableObject : MonoBehaviour
 {
@@ -18,6 +19,21 @@ public class InteractableObject : MonoBehaviour
     public AudioClip[] hitSounds; 
     public AudioClip destroySound; // Suara khusus pas objeknya hancur/hilang
 
+    [Header("Efek Visual Goyang")]
+    public float shakeDuration = 0.15f; // Berapa lama pohon goyang
+    public float shakeMagnitude = 0.1f;  // Seberapa kuat goyangnya
+    private Vector3 originalPosition;
+    private bool isShaking = false;
+
+    [Header("Efek Partikel Hancur")]
+    public GameObject destroyEffectPrefab;
+
+    private void Start()
+    {
+        // Simpan posisi awal pohon agar setelah goyang bisa balik ke tempat semula
+        originalPosition = transform.localPosition;
+    }
+    
     // Fungsi utama yang dipanggil oleh Player
     public virtual void OnHit(ItemType toolUsed)
     {
@@ -33,6 +49,12 @@ public class InteractableObject : MonoBehaviour
         }
 
         currentHits++;
+
+        // PANGGIL EFEK GOYANG DI SINI SAAT DIPUKUL
+        if (!isShaking && currentHits < maxHits)
+        {
+            StartCoroutine(ShakeObject());
+        }
         
         // LOGGING 3: Menampilkan hitungan hit saat ini
         Debug.Log($"[LOG 3] Pukulan MASUK pada '{gameObject.name}'. Hit saat ini: {currentHits} / {maxHits}");
@@ -54,6 +76,26 @@ public class InteractableObject : MonoBehaviour
                 PlaySound(hitSounds[soundIndex]);
             }
         }
+    }
+
+    private IEnumerator ShakeObject()
+    {
+        isShaking = true;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < shakeDuration)
+        {
+            // Bikin posisi acak sedikit ke kanan/kiri/atas/bawah
+            float randomX = Random.Range(-shakeMagnitude, shakeMagnitude);
+            transform.localPosition = new Vector3(originalPosition.x + randomX, originalPosition.y, originalPosition.z);
+
+            elapsedTime += Time.deltaTime;
+            yield return null; // Tunggu sampai frame berikutnya
+        }
+
+        // Kembalikan ke posisi semula setelah selesai goyang
+        transform.localPosition = originalPosition;
+        isShaking = false;
     }
 
     private void PlaySound(AudioClip clip)
@@ -82,6 +124,14 @@ public class InteractableObject : MonoBehaviour
         }
         Debug.Log($"[LOG 6] Berhasil me-nonaktifkan {childCount} objek anak (visual puzzle) dari '{gameObject.name}'.");
 
+        if (destroyEffectPrefab != null)
+        {
+            // Buat posisi partikel sedikit lebih tinggi dari pohon
+            Vector3 spawnPosition = transform.position + new Vector3(0, 1.8f, 0); 
+            GameObject effect = Instantiate(destroyEffectPrefab, spawnPosition, Quaternion.identity);
+            Destroy(effect, 2.0f); // Hancurkan sisa partikel setelah 2 detik agar tidak menumpuk di memori
+        }
+        
         // Hancurkan objek secara utuh setelah 1 detik
         Destroy(gameObject, 1.0f); 
         Debug.Log($"[LOG 7] Perintah Destroy(gameObject) untuk '{gameObject.name}' telah dikirim ke Unity. Objek akan hilang dalam 1 detik.");
