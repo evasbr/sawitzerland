@@ -10,7 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4572242273669567156}
   - component: {fileID: 6615514553031413593}
-  m_Layer: 0
+  - component: {fileID: 116123604814477150}
+  m_Layer: 6
   m_Name: Stone-2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -78,6 +79,28 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.99999994, y: 1.0137553}
   m_EdgeRadius: 0
+--- !u!114 &116123604814477150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5846205811331399998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c6c00d4da221d24f8e34c4c9137c425, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectName: Stone
+  xpReward: 2
+  audioSource: {fileID: 0}
+  maxHits: 2
+  requiredTool: 1
+  hitSounds: []
+  destroySound: {fileID: 0}
+  shakeDuration: 0.15
+  shakeMagnitude: 0.1
+  destroyEffectPrefab: {fileID: 6656646172624129884, guid: 11be2315c9675fb4eada12a0178d0290, type: 3}
 --- !u!1 &6557211489105379330
 GameObject:
   m_ObjectHideFlags: 0
@@ -88,7 +111,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3957284963423694774}
   - component: {fileID: 157557179222748604}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TilesetNature_338
   m_TagString: Untagged
   m_Icon: {fileID: 0}
