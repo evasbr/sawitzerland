@@ -640,14 +640,15 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   currentTool: 0
+  sawitPrefab: {fileID: 5484375210066936707, guid: 3a709b58d94018b468834edbd57d710a, type: 3}
   audioSource: {fileID: 0}
   sfxBareHand: {fileID: 0}
-  sfxAxe: {fileID: 0}
-  sfxHoe: {fileID: 0}
-  sfxPlanting: {fileID: 0}
-  sfxScythe: {fileID: 0}
-  sfxPickaxe: {fileID: 0}
-  sfxWatering: {fileID: 0}
+  sfxAxe: {fileID: 8300000, guid: 81e6158657dde8244947e453b5b1a2b3, type: 3}
+  sfxHoe: {fileID: 8300000, guid: 4adde4b2380cb5546afec052249cf7d0, type: 3}
+  sfxPlanting: {fileID: 8300000, guid: 4adde4b2380cb5546afec052249cf7d0, type: 3}
+  sfxScythe: {fileID: 8300000, guid: 81e6158657dde8244947e453b5b1a2b3, type: 3}
+  sfxPickaxe: {fileID: 8300000, guid: 81e6158657dde8244947e453b5b1a2b3, type: 3}
+  sfxWatering: {fileID: 8300000, guid: 293d345f5c3e41b41a2bc5456241eaf2, type: 3}
 --- !u!82 &24288530
 AudioSource:
   m_ObjectHideFlags: 0
