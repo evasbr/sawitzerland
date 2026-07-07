@@ -20,6 +20,9 @@ public class PlayerController : MonoBehaviour
     [Header("Status Alat saat Ini")]
     public ItemType currentTool = ItemType.BareHanded; 
 
+    [Header("Planting")]
+    public GameObject sawitPrefab;
+
     [Header("Komponen Audio")]
     public AudioSource audioSource;
 
@@ -108,22 +111,30 @@ public class PlayerController : MonoBehaviour
     }
 
     private void HandleActionInput()
+{
+    if (Input.GetMouseButtonDown(0))
     {
-        if (Input.GetMouseButtonDown(0))
+        Debug.Log("[INPUT LOG] Klik kiri mouse terdeteksi!");
+
+        if (anim != null)
+            anim.SetTrigger("Attack");
+
+        PlayToolSFX(currentTool);
+
+        // TANAM
+        if (currentTool == ItemType.Seeds)
         {
-            Debug.Log("[INPUT LOG] Klik kiri mouse terdeteksi! Memulai ayunan alat...");
+            Vector3 spawnPos = hitPoint.position;
 
-            // Pemicu animasi serang
-            if (anim != null) 
-                anim.SetTrigger("Attack");
+            Instantiate(sawitPrefab, spawnPos, Quaternion.identity);
 
-            // Putar suara ayunan alat
-            PlayToolSFX(currentTool);
-
-            // Jalankan deteksi objek di depan
-            DetectAndHitObject();
+            return;
         }
+
+        // TOOL LAIN
+        DetectAndHitObject();
     }
+}
 
     private void DetectAndHitObject()
     {

@@ -262,6 +262,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6561860529310516567}
   - component: {fileID: 3807619736250490747}
+  - component: {fileID: 9078630922887738923}
   m_Layer: 0
   m_Name: Sawit-1
   m_TagString: Untagged
@@ -333,6 +334,20 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.9893747, y: 0.39436245}
   m_EdgeRadius: 0
+--- !u!114 &9078630922887738923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5484375210066936707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d7535cf734019f4e84076d98763da09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nextStage: {fileID: 6329273336920528550, guid: 23c924056e68e4f4e993a67ef071292b, type: 3}
+  growTime: 7
 --- !u!1 &7877568473556196542
 GameObject:
   m_ObjectHideFlags: 0
