@@ -352,6 +352,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nextStage: {fileID: 8898004710121763969, guid: 234d3ce8fd79af447a61135b93737622, type: 3}
   growTime: 7
+  xpReward: 8
 --- !u!1 &2337042671981072134
 GameObject:
   m_ObjectHideFlags: 0
