@@ -102,7 +102,7 @@ MonoBehaviour:
   xpReward: 2
   audioSource: {fileID: 0}
   maxHits: 1
-  requiredTool: 1
+  requiredTool: 2
   hitSounds: []
   destroySound: {fileID: 0}
   shakeDuration: 0.15
